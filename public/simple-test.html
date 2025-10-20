@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .test-button {
+            background: #2196F3;
+        }
+        .test-button:hover {
+            background: #1976D2;
+        }
+        .alert-button {
+            background: #FF9800;
+        }
+        .alert-button:hover {
+            background: #F57C00;
+        }
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 JavaScript Debug Test</h1>
+        <p>This page tests if JavaScript is working without React or Next.js.</p>
+        
+        <div>
+            <button onclick="testClick()" class="test-button">Test Click Handler</button>
+            <button onclick="testAlert()" class="alert-button">Test Alert</button>
+            <button onclick="testConsole()">Test Console Log</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="log" class="log">
+            <div>Log will appear here...</div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Click "Test Click Handler" - should add a log entry</li>
+                <li>Click "Test Alert" - should show an alert popup</li>
+                <li>Click "Test Console Log" - should add a log entry</li>
+                <li>Open Developer Tools (F12) → Console tab to see console logs</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function testClick() {
+            log('✅ Click handler executed successfully!');
+        }
+
+        function testAlert() {
+            log('🚨 Alert test clicked');
+            alert('JavaScript is working! This is a native alert.');
+            log('✅ Alert shown successfully');
+        }
+
+        function testConsole() {
+            log('📝 Console test clicked');
+            console.log('This is a console log message');
+            log('✅ Console log executed');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div>Log cleared...</div>';
+        }
+
+        // Test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Page loaded, JavaScript is working!');
+            console.log('Page loaded successfully');
+        });
+
+        // Test if React is interfering
+        if (typeof React !== 'undefined') {
+            log('⚠️ React is loaded: ' + React.version);
+        } else {
+            log('✅ No React detected (this is good for this test)');
+        }
+    </script>
+</body>
+</html>
