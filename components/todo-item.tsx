@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Check, Trash2, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -29,7 +30,7 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
         config.border
       )}
     >
-      <div className="p-4 flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4 p-4">
         <Button
           variant="ghost"
           size="icon"
@@ -75,6 +76,19 @@ export function TodoItem({ todo, onToggle, onDelete }: TodoItemProps) {
           <Trash2 className="w-5 h-5" />
         </Button>
       </div>
+      {todo.image_url && (
+        <div className="px-4 pb-4">
+          <div className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-slate-100/70 dark:border-slate-700 dark:bg-slate-800/60 aspect-[4/3] max-h-72 w-full">
+            <Image
+              src={todo.image_url}
+              alt={`${todo.title} attachment`}
+              fill
+              sizes="(max-width: 768px) 100vw, 480px"
+              className="object-cover"
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

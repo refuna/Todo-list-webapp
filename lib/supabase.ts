@@ -10,6 +10,7 @@ export type Todo = {
   title: string;
   completed: boolean;
   priority: 'low' | 'medium' | 'high';
+  image_url: string | null;
   created_at: string;
   updated_at: string;
 };

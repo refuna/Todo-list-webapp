@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS todos (
   title TEXT NOT NULL,
   completed BOOLEAN DEFAULT FALSE,
   priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -23,7 +24,7 @@ CREATE POLICY "Allow all operations for all users" ON todos
 CREATE INDEX IF NOT EXISTS idx_todos_created_at ON todos(created_at DESC);
 
 -- Insert some sample data (optional)
-INSERT INTO todos (title, priority, completed) VALUES 
-  ('Welcome to TaskFlow!', 'high', false),
-  ('Create your first task', 'medium', false),
-  ('Mark tasks as complete', 'low', false);
+INSERT INTO todos (title, priority, completed, image_url) VALUES 
+  ('Welcome to TaskFlow!', 'high', false, NULL),
+  ('Create your first task', 'medium', false, NULL),
+  ('Mark tasks as complete', 'low', false, NULL);

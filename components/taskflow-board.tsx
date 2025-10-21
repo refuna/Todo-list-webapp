@@ -12,22 +12,20 @@ import { TodoInput } from '@/components/todo-input';
 import { TodoItem } from '@/components/todo-item';
 import { TodoStats } from '@/components/todo-stats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SupabaseTest } from '@/components/supabase-test';
 import { cn } from '@/lib/utils';
 
 interface TaskflowBoardProps {
   showAuthPrompt?: boolean;
-  showSupabaseTest?: boolean;
   showSessionControls?: boolean;
   className?: string;
 }
 
 export function TaskflowBoard({
   showAuthPrompt = false,
-  showSupabaseTest = false,
   showSessionControls = false,
   className,
 }: TaskflowBoardProps) {
+  const AUTH_REQUIRED_ERROR = 'AUTH_REQUIRED';
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -56,11 +54,93 @@ export function TaskflowBoard({
     fetchTodos();
   }, [fetchTodos]);
 
-  const addTodo = async (title: string, priority: 'low' | 'medium' | 'high') => {
+  useEffect(() => {
+    const channel = supabase
+      .channel('public:todos')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'todos' },
+        (payload) => {
+          setTodos((current) => {
+            if (payload.eventType === 'INSERT') {
+              const newTodo = payload.new as Todo;
+              const alreadyExists = current.some((todo) => todo.id === newTodo.id);
+              if (alreadyExists) {
+                return current.map((todo) => (todo.id === newTodo.id ? { ...todo, ...newTodo } : todo));
+              }
+              return [newTodo, ...current];
+            }
+
+            if (payload.eventType === 'UPDATE') {
+              const updatedTodo = payload.new as Todo;
+              return current.map((todo) => (todo.id === updatedTodo.id ? { ...todo, ...updatedTodo } : todo));
+            }
+
+            if (payload.eventType === 'DELETE') {
+              const deletedTodo = payload.old as { id: string };
+              return current.filter((todo) => todo.id !== deletedTodo.id);
+            }
+
+            return current;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const addTodo = async (title: string, priority: 'low' | 'medium' | 'high', attachment: File | null) => {
     try {
+      let imageUrl: string | null = null;
+
+      if (attachment) {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          throw userError;
+        }
+
+        if (!user) {
+          toast({
+            title: 'Authentication required',
+            description: 'You must be signed in to upload an attachment.',
+            variant: 'destructive',
+          });
+          throw new Error(AUTH_REQUIRED_ERROR);
+        }
+
+        const extension = attachment.name.split('.').pop();
+        const fallbackId = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const uniqueName =
+          typeof globalThis.crypto !== 'undefined' && typeof globalThis.crypto.randomUUID === 'function'
+            ? globalThis.crypto.randomUUID()
+            : fallbackId;
+        const sanitizedName = extension ? `${uniqueName}.${extension}` : uniqueName;
+        const filePath = `${user.id}/${sanitizedName}`;
+
+        const { error: uploadError } = await supabase.storage.from('my-todo').upload(filePath, attachment, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: attachment.type,
+        });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        const { data: publicUrlData } = supabase.storage.from('my-todo').getPublicUrl(filePath);
+        imageUrl = publicUrlData?.publicUrl ?? null;
+      }
+
       const { data, error } = await supabase
         .from('todos')
-        .insert([{ title, priority }])
+        .insert([{ title, priority, image_url: imageUrl }])
         .select()
         .maybeSingle();
 
@@ -73,6 +153,10 @@ export function TaskflowBoard({
         });
       }
     } catch (error) {
+      if (error instanceof Error && error.message === AUTH_REQUIRED_ERROR) {
+        return;
+      }
+
       toast({
         title: 'Error',
         description: `Failed to add todo: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -181,12 +265,6 @@ export function TaskflowBoard({
             </p>
           </div>
           <LogoutButton className="rounded-full border-2 border-slate-300 px-4 dark:border-slate-600" />
-        </div>
-      )}
-
-      {showSupabaseTest && (
-        <div className="rounded-3xl border-2 border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
-          <SupabaseTest />
         </div>
       )}
 
